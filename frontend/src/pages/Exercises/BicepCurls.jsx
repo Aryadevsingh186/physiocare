@@ -1,15 +1,11 @@
-
 import React, { useEffect, useState } from "react";
-
 import { Link } from "react-router-dom";
 
 const BicepCurls = () => {
-    const [frame, setFrame] = useState(null);
   const [counters, setCounters] = useState({ left: 0, right: 0 });
   const [feedback, setFeedback] = useState({ left: "", right: "" });
 
-
-useEffect(() => {
+  useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch("http://localhost:5001/bicep/status");
@@ -19,14 +15,13 @@ useEffect(() => {
       } catch (err) {
         console.error("Error fetching bicep status:", err);
       }
-    }, 500); // update every 0.5 sec
+    }, 500);
 
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div style={{ background: "#f9fafb", minHeight: "100vh", color: "#232323", fontFamily: "inherit" }}>
-      {/* Header */}
       <div style={{
         maxWidth: 1200,
         margin: "0 auto",
@@ -59,9 +54,7 @@ useEffect(() => {
         flexDirection: "column",
         gap: 34,
       }}>
-        {/* AI Instructor and Your Form Row */}
         <div style={{ display: "flex", gap: 32, marginBottom: 10 }}>
-
           {/* AI Instructor block */}
           <div style={{
             flex: 1,
@@ -125,7 +118,6 @@ useEffect(() => {
               }}>Restart</button>
             </div>
           </div>
-
           {/* Your Form block */}
           <div style={{
             flex: 1,
@@ -151,10 +143,9 @@ useEffect(() => {
             }}>
               <span style={{ fontWeight: 700, fontSize: 24 }}>Your Form</span>
             </div>
-
-            {/* Live frame */}
+            {/* Live MJPEG stream from Flask */}
             <img
-              src="http://localhost:5001/bicep/live" // directly use MJPEG or HLS URL
+              src="http://localhost:5001/bicep/live"
               alt="Live Bicep Feed"
               style={{
                 width: "100%",
@@ -166,7 +157,6 @@ useEffect(() => {
             />
           </div>
         </div>
-
         {/* Feedback row */}
         <div style={{ width: "100%", display: "flex", justifyContent: "center" }}>
           <div style={{
