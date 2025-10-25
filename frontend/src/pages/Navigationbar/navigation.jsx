@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-
+import logo from '../../assets/logo.png'; 
 const NavBar = () => {
   const location = useLocation();
 
@@ -29,7 +29,7 @@ const NavBar = () => {
         paddingRight: "36px",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <img src="/logo.png" alt="logo" style={{ width: "40px", height: "40px" }} />
+          <img src={logo} alt="logo" style={{ width: "70px", height: "70px" }} />
           <span style={{ fontWeight: 600 }}>PhysioCare</span>
         </div>
         <div>

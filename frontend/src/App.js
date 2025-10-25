@@ -6,6 +6,7 @@ import Login from "./pages/Login/login";
 import Dashboard from "./pages/Dashboard/dashboard"; 
 import Progress from "./pages/Progress/progress";
 import BicepCurls from "./pages/Exercises/BicepCurls";
+import Squats from "./pages/Exercises/Squats";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/BicepCurls" element={<BicepCurls />} />
+        <Route path="/Squats" element={<Squats />} />
       </Routes>
     </Router>
   );
