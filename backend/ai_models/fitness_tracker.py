@@ -2,9 +2,10 @@ from flask import Flask, Response, jsonify
 import cv2
 from final_bicep_tracker import process_bicep  # Import your bicep processing function
 from final_squat_tracker import process_frame as process_squat  # Import your squat processing function
+from flask_cors import CORS
 
 app = Flask(__name__)
-
+CORS(app) 
 # Single global webcam capture object
 cap = cv2.VideoCapture(0)
 

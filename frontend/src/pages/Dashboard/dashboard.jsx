@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { FaBullseye, FaClock, FaFire, FaStar } from "react-icons/fa";
 import { FiSettings, FiFilter } from "react-icons/fi";
 import { AiOutlineBarChart } from "react-icons/ai";
-
+import logo from '../../assets/logo.png';
 const stats = [
   { label: "This Week", value: 12, icon: <FaBullseye /> },
   { label: "Total Time", value: "4.2h", icon: <FaClock /> },
@@ -27,7 +27,7 @@ const Dashboard = () => {
   const [selectedLevel, setSelectedLevel] = useState(levels[0]);
 
   return (
-    <div style={{ background: "#F7F8FA", minHeight: "100vh", fontFamily: "inherit" }}>
+    <div style={{ background: "#F7F8FA", minHeight: "100vh"}}>
       {/* Top Nav Bar */}
       <header style={{
         background: "#fff",
@@ -40,7 +40,7 @@ const Dashboard = () => {
         fontSize: "1rem",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
-          <img src="/logo.png" alt="logo" style={{ width: 36, height: 36, borderRadius: 10 }} />
+          <img src={logo} alt="logo" style={{ width: 70, height: 70, borderRadius: 10 }} />
           <span style={{ fontWeight: 600, fontSize: "1.23rem", color: "#1496f3" }}>PhysioCare</span>
           <span style={{ fontWeight: 500, fontSize: "1.04rem", color: "#888", marginLeft: 22 }}>
             Exercise Selection
