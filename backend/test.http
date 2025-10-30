@@ -1,0 +1,10 @@
+POST http://localhost:5000/api/report
+Content-Type: application/json
+
+{
+  "patientName": "John Doe",
+  "weekData": {
+    "Bicep Curls": { "count": 40, "avgFormScore": 85 },
+    "Squats": { "count": 30, "avgFormScore": 80 }
+  }
+}

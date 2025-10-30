@@ -1,5 +1,6 @@
 import express from 'express'
 import exerciseRoutes from "./routes/exerciseRoutes.js";
+import reportRoutes from "./routes/reportRoutes.js";
 import cors from 'cors'
 import 'dotenv/config'
 
@@ -16,9 +17,10 @@ app.use(express.json())
 app.get('/',(req,res)=> res.send("API Working "))
 
 app.use("/api/exercise", exerciseRoutes);
+app.use("/api/report", reportRoutes);
 
 //PORT 
-const PORT = process.env.port || 5000
+const PORT = process.env.PORT || 5000
 
 app.listen(PORT,()=>{
   console.log(`Server is ruuning on port ${PORT}`)
