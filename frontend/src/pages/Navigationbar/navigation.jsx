@@ -1,60 +1,106 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 
 const NavBar = () => {
   const location = useLocation();
 
   // Toggle link text based on current path:
-  const homeAboutLink = location.pathname === "/about" 
-    ? { path: "/", label: "Home" } 
-    : { path: "/about", label: "About" };
+  const homeAboutLink =
+    location.pathname === "/about"
+      ? { path: "/", label: "Home" }
+      : { path: "/about", label: "About" };
+
+  // Active link style function
+  const activeLinkStyle = {
+    color: "#1496f3",
+    fontWeight: "600",
+    textDecoration: "underline",
+  };
+
+  const defaultLinkStyle = {
+    color: "#232323",
+    textDecoration: "none",
+    margin: "0 16px",
+  };
 
   return (
-    <header style={{
-      background: "#fff",
-      color: "#232323",
-      padding: "10px 0",
-      display: "flex",
-      flexDirection: "row",
-      alignItems: "center",
-      textAlign: "center",
-      borderBottom: "1px solid #eee"
-    }}>
-      <nav style={{
-        width: "100%",
+    <header
+      style={{
+        background: "#fff",
+        color: "#232323",
+        padding: "10px 0",
         display: "flex",
-        justifyContent: "space-between",
+        flexDirection: "row",
         alignItems: "center",
-        paddingLeft: "36px",
-        paddingRight: "36px",
-      }}>
+        textAlign: "center",
+        borderBottom: "1px solid #eee",
+      }}
+    >
+      <nav
+        style={{
+          width: "100%",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          paddingLeft: "36px",
+          paddingRight: "36px",
+        }}
+      >
+        {/* Logo Section */}
         <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <img src="/logo.png" alt="logo" style={{ width: "40px", height: "40px" }} />
-          <span style={{ fontWeight: 600 }}>PhysioCare</span>
+          <img
+            src="/logo.jpg"
+            alt="logo"
+            style={{ width: "40px", height: "40px", borderRadius: 6 }}
+          />
+          <span style={{ fontWeight: 600, fontSize: "1.2rem" }}>PhysioCare</span>
         </div>
+
+        {/* Links */}
         <div>
-          <Link to={homeAboutLink.path} style={{ margin: "0 16px", color: "#232323", textDecoration: "none" }}>
+          <NavLink
+            to={homeAboutLink.path}
+            style={({ isActive }) =>
+              isActive ? { ...activeLinkStyle, margin: "0 16px" } : defaultLinkStyle
+            }
+          >
             {homeAboutLink.label}
-          </Link>
-          <Link to="/pricing" style={{ margin: "0 16px", color: "#232323", textDecoration: "none" }}>
+          </NavLink>
+
+          <NavLink
+            to="/pricing"
+            style={({ isActive }) =>
+              isActive ? { ...activeLinkStyle, margin: "0 16px" } : defaultLinkStyle
+            }
+          >
             Pricing
-          </Link>
-          <Link to="/contact" style={{ margin: "0 16px", color: "#232323", textDecoration: "none" }}>
+          </NavLink>
+
+          <NavLink
+            to="/contact"
+            style={({ isActive }) =>
+              isActive ? { ...activeLinkStyle, margin: "0 16px" } : defaultLinkStyle
+            }
+          >
             Contact
-          </Link>
-          <Link to="/login" style={{
-            background: "#1496f3",
-            color: "#fff",
-            borderRadius: "6px",
-            padding: "8px 18px",
-            fontWeight: "500",
-            marginLeft: "12px",
-            cursor: "pointer",
-            textDecoration: "none",
-            display: "inline-block"
-          }}>
+          </NavLink>
+
+          <NavLink
+            to="/login"
+            style={{
+              background: "#1496f3",
+              color: "#fff",
+              borderRadius: "6px",
+              padding: "8px 18px",
+              fontWeight: "500",
+              marginLeft: "12px",
+              cursor: "pointer",
+              textDecoration: "none",
+              display: "inline-block",
+            }}
+          >
             Sign In
-          </Link>
+          </NavLink>
         </div>
       </nav>
     </header>
