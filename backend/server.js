@@ -4,8 +4,6 @@ import "dotenv/config";
 import authRoutes from "./routes/authRoutes.js";
 import exerciseRoutes from "./routes/exerciseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
-import cors from 'cors'
-import 'dotenv/config'
 import userProfileRoutes from "./routes/userprofileRoutes.js";
 
 const app = express();
@@ -30,7 +28,6 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
-const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });

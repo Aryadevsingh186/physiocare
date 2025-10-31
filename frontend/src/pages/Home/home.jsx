@@ -21,10 +21,11 @@ const Home = () => (
       <div style={{ flex: 1, minWidth: "320px" }}>
         <h1
           style={{
-            fontSize: "3.5rem",
+            fontSize: "2.6rem",
             fontWeight: "600",
             color: "#1596f3",
             lineHeight: "1.08",
+            textAlign: "left",
           }}
         >
           Personalized AI-Powered Physiotherapy at Your Fingertips
