@@ -5,8 +5,33 @@ import { FcGoogle } from "react-icons/fc";
 import { FaFacebookF } from "react-icons/fa";
 
 const Login = () => {
-  const [role, setRole] = useState("Patient");
+  const [role, setRole] = useState("user");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const navigate = useNavigate();
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password, role }),
+      });
+      const data = await response.json();
+      if (data.success && data.token) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("user", JSON.stringify(data.user));
+        alert("Login successful!");
+        navigate("/dashboard");
+      } else {
+        alert("Login failed: " + (data.message || "Invalid credentials"));
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      alert("Something went wrong: " + error.message);
+    }
+  };
 
   const selectedRoleStyle = {
     background: "#1496f3",
@@ -18,13 +43,6 @@ const Login = () => {
     color: "#75757B",
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // TODO: add authentication here
-    // Navigate to Dashboard on successful login
-    navigate("/dashboard");
-  };
-
   return (
     <div
       style={{
@@ -34,43 +52,13 @@ const Login = () => {
         flexDirection: "column",
         justifyContent: "center",
         alignItems: "center",
-        padding: "20px"
+        padding: "20px",
       }}
     >
-      <header
-        style={{
-          width: "100%",
-          maxWidth: "440px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          marginBottom: "32px",
-        }}
-      >
-        <Link
-          to="/"
-          style={{
-            color: "#232323",
-            fontWeight: 500,
-            textDecoration: "none",
-            fontSize: "1.17rem",
-          }}
-        >
-          ← Back to Home
-        </Link>
-        <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-          <img
-            src="/logo.png"
-            alt="logo"
-            style={{ width: "40px", height: "40px", borderRadius: "10px", objectFit: "cover" }}
-          />
-          <span style={{ fontWeight: 600, fontSize: "1.17rem" }}>PhysioCare</span>
-        </div>
-      </header>
-
       <form
-        onSubmit={handleSubmit}
+        onSubmit={handleLogin}
         style={{
+          position: "relative", // Needed for absolute positioning
           background: "#fff",
           borderRadius: "18px",
           boxShadow: "0 1px 18px rgba(25,39,52,0.11)",
@@ -81,28 +69,42 @@ const Login = () => {
           flexDirection: "column",
         }}
       >
+        {/* Back button inside form, positioned at top left */}
+        <button
+          type="button"
+          onClick={() => navigate("/")}
+          style={{
+            position: "absolute",
+            top: "20px",
+            left: "20px",
+            background: "#111827",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            padding: "8px 18px",
+            fontSize: "1rem",
+            fontWeight: 500,
+            cursor: "pointer",
+            transition: "background 0.15s",
+          }}
+          aria-label="Go back to home"
+        >
+          ← Back
+        </button>
+
         <h2
           style={{
             textAlign: "center",
             fontWeight: 600,
-            marginBottom: "5px",
+            marginBottom: "40px",
             fontSize: "2rem",
             letterSpacing: ".02em",
           }}
         >
           Welcome Back
         </h2>
-        <p
-          style={{
-            textAlign: "center",
-            color: "#7B7B88",
-            fontSize: "1.13rem",
-            marginBottom: "22px",
-          }}
-        >
-          Sign in to continue your recovery
-        </p>
 
+        {/* Role selection */}
         <div
           style={{
             display: "flex",
@@ -115,7 +117,7 @@ const Login = () => {
         >
           <button
             type="button"
-            onClick={() => setRole("Patient")}
+            onClick={() => setRole("user")}
             style={{
               flex: 1,
               padding: "13px 0",
@@ -124,14 +126,14 @@ const Login = () => {
               fontSize: "1rem",
               cursor: "pointer",
               transition: "background 0.3s",
-              ...(role === "Patient" ? selectedRoleStyle : unselectedRoleStyle),
+              ...(role === "user" ? selectedRoleStyle : unselectedRoleStyle),
             }}
           >
             Patient
           </button>
           <button
             type="button"
-            onClick={() => setRole("Doctor")}
+            onClick={() => setRole("doctor")}
             style={{
               flex: 1,
               padding: "13px 0",
@@ -140,13 +142,14 @@ const Login = () => {
               fontSize: "1rem",
               cursor: "pointer",
               transition: "background 0.3s",
-              ...(role === "Doctor" ? selectedRoleStyle : unselectedRoleStyle),
+              ...(role === "doctor" ? selectedRoleStyle : unselectedRoleStyle),
             }}
           >
             Doctor/Physio
           </button>
         </div>
 
+        {/* Email */}
         <label style={{ fontWeight: 500, marginBottom: "6px", fontSize: "1.06rem" }}>
           Email
         </label>
@@ -172,9 +175,12 @@ const Login = () => {
               outline: "none",
             }}
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
           />
         </div>
 
+        {/* Password */}
         <label style={{ fontWeight: 500, marginBottom: "6px", fontSize: "1.06rem" }}>
           Password
         </label>
@@ -200,9 +206,12 @@ const Login = () => {
               outline: "none",
             }}
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
           />
         </div>
 
+        {/* Sign In button */}
         <button
           type="submit"
           style={{
@@ -221,6 +230,36 @@ const Login = () => {
           Sign In
         </button>
 
+        {/* Signup link */}
+        <div
+          style={{
+            textAlign: "center",
+            color: "#232323",
+            fontSize: "1.05rem",
+            marginBottom: "10px",
+          }}
+        >
+          Don't have an account?{" "}
+          <Link to="/register" style={{ color: "#1169f0", textDecoration: "none" }}>
+            Sign up
+          </Link>
+        </div>
+
+        {/* Forgot password */}
+        <div
+          style={{
+            textAlign: "center",
+            color: "#75757B",
+            fontSize: "1.01rem",
+            marginTop: "7px",
+          }}
+        >
+          <Link to="/forgot-password" style={{ color: "#1169f0", textDecoration: "none" }}>
+            Forgot your password?
+          </Link>
+        </div>
+
+        {/* Social buttons */}
         <button
           type="button"
           style={{
@@ -241,7 +280,6 @@ const Login = () => {
           <FcGoogle size={21} />
           Continue with Google
         </button>
-
         <button
           type="button"
           style={{
@@ -262,33 +300,6 @@ const Login = () => {
           <FaFacebookF size={19} style={{ color: "#4064ac" }} />
           Continue with Facebook
         </button>
-
-        <div
-          style={{
-            margin: "12px 0 2px 0",
-            textAlign: "center",
-            color: "#232323",
-            fontSize: "1.05rem",
-          }}
-        >
-          Don't have an account?{" "}
-          <a href="#" style={{ color: "#1169f0", textDecoration: "none" }}>
-            Sign up
-          </a>
-        </div>
-
-        <div
-          style={{
-            textAlign: "center",
-            color: "#75757B",
-            fontSize: "1.01rem",
-            marginTop: "7px",
-          }}
-        >
-          <a href="#" style={{ color: "#1169f0", textDecoration: "none" }}>
-            Forgot your password?
-          </a>
-        </div>
       </form>
     </div>
   );

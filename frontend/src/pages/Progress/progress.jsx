@@ -48,7 +48,7 @@ const Progress = () => {
   };
   const pieOptions = { responsive: true, plugins: { legend: { display: false } } };
   const sessions = [
-    { name: "Neck Rotation", ago: "2 hours ago", accuracy: 87, result: "Great", time: "5:42" },
+    { name: "BicepCurls", ago: "2 hours ago", accuracy: 87, result: "Great", time: "5:42" },
     { name: "Shoulder Squeeze", ago: "1 day ago", accuracy: 82, result: "Good", time: "8:15" },
     { name: "Back Extension", ago: "2 days ago", accuracy: 79, result: "Good", time: "7:30" },
     { name: "Hip Flexor", ago: "3 days ago", accuracy: 91, result: "Great", time: "10:20" },
@@ -133,7 +133,7 @@ const Progress = () => {
             }}>
               {/* Make exercise name clickable */}
               <div>
-                <button onClick={() => navigate("/neck-rotation")}
+                <button onClick={() => navigate("/bicepCurls")}
                   style={{ fontWeight: 500, background: "none", border: "none", color: "#232323", fontSize: "1.08rem", cursor: "pointer", textAlign: "left", padding: 0 }}>
                   {sess.name}
                 </button>
