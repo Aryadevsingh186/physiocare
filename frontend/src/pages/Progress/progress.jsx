@@ -56,7 +56,7 @@ const Progress = () => {
   ];
 
   return (
-    <div style={{ background: "#F7F8FA", minHeight: "100vh", fontFamily: "inherit" }}>
+    <div style={{ background: "#F7F8FA", minHeight: "100vh"}}>
       {/* Top Header */}
       <header style={{
         background: "#fff",

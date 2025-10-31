@@ -6,6 +6,9 @@ import Login from "./pages/Login/login";
 import Dashboard from "./pages/Dashboard/dashboard"; 
 import Progress from "./pages/Progress/progress";
 import BicepCurls from "./pages/Exercises/BicepCurls";
+import Squats from "./pages/Exercises/Squats";
+import Report from "./pages/Report/report";
+import ReportTest from "./pages/ReportTest";
 import Register from "./pages/Login/register";
 import ProtectedRoute from "./pages/Login/ProtectedRoute";
 import UserProfile from "./pages/Dashboard/userprofile";
@@ -20,6 +23,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/BicepCurls" element={<BicepCurls />} />
+        <Route path="/Squats" element={<Squats />} />
+        <Route path="/report" element={<Report />} />
+        <Route path="/report-test" element={<ReportTest />} />
 
         {/* Protected routes wrapper */}
         <Route element={<ProtectedRoute />}>

@@ -3,7 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { FaBullseye, FaClock, FaFire, FaStar } from "react-icons/fa";
 import { FiSettings, FiFilter } from "react-icons/fi";
 import { AiOutlineBarChart } from "react-icons/ai";
-
+import logo from '../../assets/logo.png';
 const stats = [
   { label: "This Week", value: 12, icon: <FaBullseye /> },
   { label: "Total Time", value: "4.2h", icon: <FaClock /> },
@@ -38,6 +38,20 @@ const Dashboard = () => {
   const userInitial = "U";
 
   return (
+    <div style={{ background: "#F7F8FA", minHeight: "100vh"}}>
+      {/* Top Nav Bar */}
+      <header style={{
+        background: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        padding: "18px 44px",
+        borderBottom: "1px solid #eee",
+        minHeight: "62px",
+        fontSize: "1rem",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "18px" }}>
+          <img src={logo} alt="logo" style={{ width: 70, height: 70, borderRadius: 10 }} />
     <div style={{ background: "#F7F8FA", minHeight: "100vh" }}>
       <header
         style={{
