@@ -3,6 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from collections import deque
+from curl_logger import log_curl
 
 # -------------------------------
 # Utility
@@ -83,8 +84,12 @@ def process_bicep(frame):
                 states[side]="up"; frames_in_state[side]=0
                 feedback[side]="flexing (curl up)"
             elif smooth_angle>extension_threshold and states[side]=="up" and frames_in_state[side]>3:
-                states[side]="down"; counters[side]+=1; frames_in_state[side]=0
-                feedback[side]=f"✅ curl counted! Total: {counters[side]}"
+                states[side] = "down"
+                counters[side] += 1
+                frames_in_state[side] = 0
+                # Log the completed curl
+                log_curl(side, angle_buffers[side], counters[side])
+                feedback[side] = f"✅ curl counted! Total: {counters[side]}"
 
             # Draw
             cv2.line(frame, s, e, (0,255,0), 3)
