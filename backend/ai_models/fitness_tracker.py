@@ -8,34 +8,36 @@ app = Flask(__name__)
 CORS(app) 
 # Single global webcam capture object
 cap = cv2.VideoCapture(0)
+# Global to store latest counters and feedback
+latest_status = {"counters": {"left": 0, "right": 0}, "feedback": {"left": "not detected", "right": "not detected"}}
 
 @app.route("/bicep/live")
 def bicep_live():
     def generate():
+        global latest_status
         while True:
-            try:
-                ret, frame = cap.read()
-                if not ret:
-                    continue  # retry if frame not captured
-                
-                # Process frame with bicep tracker
-                counters, feedback, overlay = process_bicep(frame)
-                
-                # Encode and stream overlay
-                _, buffer = cv2.imencode('.jpg', overlay)
-                yield (b'--frame\r\n'
-                       b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
-            except Exception:
-                continue  # on error, continue streaming
+            ret, frame = cap.read()
+            if not ret:
+                continue
+            counters, feedback, overlay = process_bicep(frame)
+            # Update latest status
+            latest_status["counters"] = counters
+            latest_status["feedback"] = feedback
+
+            _, buffer = cv2.imencode('.jpg', overlay)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
     return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
 
 @app.route("/bicep/status")
 def bicep_status():
-    ret, frame = cap.read()
-    if not ret:
-        return jsonify({"exercise": "bicep", "counters": {"left": 0, "right": 0}, "feedback": {"left": "", "right": ""}})
-    counters, feedback, _ = process_bicep(frame)
-    return jsonify({"exercise": "bicep", "counters": counters, "feedback": feedback})
+    # Simply return the latest processed counters/feedback
+    return jsonify({
+        "exercise": "bicep",
+        "counters": latest_status["counters"],
+        "feedback": latest_status["feedback"]
+    })
+
 
 @app.route("/squat/live")
 def squat_live():

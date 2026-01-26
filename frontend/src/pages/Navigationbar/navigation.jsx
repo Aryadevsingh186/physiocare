@@ -54,7 +54,7 @@ const NavBar = () => {
             alt="logo"
             style={{ width: "40px", height: "40px", borderRadius: 6 }}
           />
-          <span style={{ fontWeight: 600, fontSize: "1.2rem" }}>PhysioCare</span>
+          <span style={{ fontWeight: 600, fontSize: "1.2rem" }}>PhysioAssist</span>
         </div>
 
         {/* Links */}
