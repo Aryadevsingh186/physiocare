@@ -2,8 +2,6 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from collections import deque
-from feedback_engine import generate_feedback
-
 
 # -------------------------------
 # Utility
@@ -94,39 +92,12 @@ def process_bicep(frame):
             frames_in_state[side] += 1
             feedback[side] = f"{int(smooth_angle)}°"
 
-            # ----------- Curl up -----------
-            if smooth_angle < flexion_threshold and states[side] == "down":
-                states[side] = "up"
-                frames_in_state[side] = 0
-                elbow_start_pos[side] = e
-
-            # ----------- Curl down (rep complete) -----------
-            elif smooth_angle > extension_threshold and states[side] == "up":
-                states[side] = "down"
-                counters[side] += 1
-
-                # Elbow drift
-                elbow_drift = np.linalg.norm(
-                    np.array(e) - np.array(elbow_start_pos[side])
-                )
-
-                fb = generate_feedback(
-                    min(angle_buffers[side]),
-                    frames_in_state[side],
-                    counters["left"],
-                    counters["right"],
-                    elbow_drift
-                )
-
-                feedback[side] = (
-                    f"{fb['range']} | "
-                    f"{fb['speed']} | "
-                    f"{fb['symmetry']} | "
-                    f"{fb['fatigue']} | "
-                    f"{fb['form']}"
-                )
-
-                frames_in_state[side] = 0
+            if smooth_angle<flexion_threshold and states[side]=="down" and frames_in_state[side]>3:
+                states[side]="up"; frames_in_state[side]=0
+                feedback[side]="flexing (curl up)"
+            elif smooth_angle>extension_threshold and states[side]=="up" and frames_in_state[side]>3:
+                states[side]="down"; counters[side]+=1; frames_in_state[side]=0
+                feedback[side]=f"✅ curl counted! Total: {counters[side]}"
 
             # Draw skeleton
             cv2.line(frame, s, e, (0,255,0), 3)
