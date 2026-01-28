@@ -2,6 +2,7 @@ from flask import Flask, Response, jsonify
 import cv2
 from final_bicep_tracker import process_bicep  # Import your bicep processing function
 from final_squat_tracker import process_frame as process_squat  # Import your squat processing function
+from neck_tracker import process_neck
 from flask_cors import CORS
 
 app = Flask(__name__)
@@ -10,6 +11,7 @@ CORS(app)
 cap = cv2.VideoCapture(0)
 # Global to store latest counters and feedback
 latest_status = {"counters": {"left": 0, "right": 0}, "feedback": {"left": "not detected", "right": "not detected"}}
+latest_neck = {"count": 0}
 
 @app.route("/bicep/live")
 def bicep_live():
@@ -67,5 +69,28 @@ def squat_status():
     count, feedback, _ = process_squat(frame)
     return jsonify({"exercise": "squat", "count": count, "feedback": feedback})
 
+
+@app.route("/neck/live")
+def neck_live():
+    def generate():
+        global latest_neck
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                continue
+
+            count, overlay = process_neck(frame)
+            latest_neck["count"] = count
+
+            _, buffer = cv2.imencode('.jpg', overlay)
+            yield (b'--frame\r\n'
+                   b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+    return Response(generate(), mimetype="multipart/x-mixed-replace; boundary=frame")
+@app.route("/neck/status")
+def neck_status():
+    # Only return the latest counter from live feed
+    return jsonify({"exercise": "neck", "counter": latest_neck["count"]})
+
 if __name__ == "__main__":
     app.run(port=5001, debug=False, use_reloader=False)
+

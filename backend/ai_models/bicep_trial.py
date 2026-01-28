@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 from collections import deque
-from feedback_engine import generate_feedback
+from feedback_forbicep import generate_feedback
 
 # -------------------------------
 # Utility

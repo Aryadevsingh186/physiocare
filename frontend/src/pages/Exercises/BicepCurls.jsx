@@ -2,7 +2,7 @@ import Exercise from "./Exercise";
 
 const BicepCurls = () => (
   <Exercise
-    title="Bicep Curls"
+    title="BicepCurls"
     statusUrl="http://localhost:5001/bicep/status"
     liveUrl="http://localhost:5001/bicep/live"
     mapData={(data) => ({

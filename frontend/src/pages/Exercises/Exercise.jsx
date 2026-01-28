@@ -111,13 +111,13 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
 
   {/* Video instead of placeholder */}
   <video
-    src={title === "Squats" ? "/videos/squat.mp4" : "/videos/bicepcurl.mp4"}
+    src={ title === "Squats" ? "/videos/squat.mp4" : ( title === "BicepCurls" ? "/videos/bicepcurl.mp4" : "/videos/neck.mp4")}
     autoPlay
     muted
     loop
     playsInline
     style={{
-      width: "100%",
+      width: "100%" ,
       maxHeight: 280,
       borderRadius: 10,
       objectFit: "cover",
