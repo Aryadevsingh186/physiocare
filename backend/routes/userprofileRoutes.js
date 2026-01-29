@@ -5,7 +5,6 @@ import supabase from "../config/supabase.js";
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 
-
 /* ===================================================
    🔐 TOKEN VERIFICATION (UUID safe)
    =================================================== */
@@ -50,7 +49,6 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-
 /* ===================================================
    👤 GET PROFILE
    =================================================== */
@@ -83,7 +81,6 @@ router.get("/profile", verifyToken, async (req, res) => {
     });
   }
 });
-
 
 /* ===================================================
    ✏️ UPDATE PROFILE
@@ -136,6 +133,5 @@ router.put("/update", verifyToken, async (req, res) => {
     });
   }
 });
-
 
 export default router;

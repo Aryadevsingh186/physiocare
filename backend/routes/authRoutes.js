@@ -9,7 +9,6 @@ dotenv.config();
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 
-
 /* ===================================================
    🧾 REGISTER ROUTE (Supabase)
    =================================================== */
@@ -50,9 +49,7 @@ router.post("/register", async (req, res) => {
           phone,
         },
       ])
-      .select(
-        "user_id, name, email, role, age, gender, phone"
-      )
+      .select("user_id, name, email, role, age, gender, phone")
       .single();
 
     if (insertError) throw insertError;
@@ -67,7 +64,6 @@ router.post("/register", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 /* ===================================================
    🔐 LOGIN ROUTE (Supabase)
@@ -131,6 +127,5 @@ router.post("/login", async (req, res) => {
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
-
 
 export default router;
