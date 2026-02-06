@@ -13,6 +13,7 @@ import ReportTest from "./pages/ReportTest";
 import Register from "./pages/Login/register";
 import ProtectedRoute from "./pages/Login/ProtectedRoute";
 import UserProfile from "./pages/Dashboard/userprofile";
+import PostureCheckPage from "./pages/Exercises/instructions.jsx";
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/Neck" element={<Neck />} />
         <Route path="/report" element={<Report />} />
         <Route path="/report-test" element={<ReportTest />} />
+        <Route path="/posture" element={<PostureCheckPage />} />
 
         {/* Protected routes wrapper */}
         {/* <Route element={<ProtectedRoute />}> */}

@@ -1,140 +1,135 @@
 import { useEffect, useRef, useState } from "react";
 
-// Convert feedback data to natural language sentences
-const convertToNaturalLanguage = (counters, feedback, modelFeedback, lastCountersRef, lastModelFeedbackRef, lastFeedbackRef) => {
+/* ----------- HELPERS ----------- */
+const extractFeedbackLabel = (feedbackStr) => {
+  if (!feedbackStr) return "none";
+  const match = feedbackStr.match(/Feedback:\s*([a-zA-Z_]+)/i);
+  return match ? match[1].toLowerCase() : "none";
+};
+
+/* ----------- CORE ----------- */
+const convertToNaturalLanguage = (
+  counters,
+  feedback,
+  lastCountersRef,
+  feedbackLatchRef
+) => {
   const messages = [];
+
+  console.log("🧠 INPUT:", { counters, feedback });
 
   for (const side in counters) {
     const count = counters[side];
     const lastCount = lastCountersRef.current[side] || 0;
-    const sideText = side === "left" ? "left" : "right";
-    
-    // Check feedback string for non-angle updates
-    const feedbackStr = feedback[side] || "";
-    const lastFeedbackStr = lastFeedbackRef.current[side] || "";
-    
-    // If counter increased, announce new count
-    if (count > lastCount) {
-      messages.push(`${count} rep${count !== 1 ? "s" : ""}`);
-      lastCountersRef.current[side] = count;
-    }
-    
-    // If feedback changed (excluding "detected" angles), announce it
-    if (feedbackStr && feedbackStr !== lastFeedbackStr) {
-      // Skip the "detected - angle" messages
-      if (!feedbackStr.includes("detected -") && feedbackStr !== "not detected") {
-        // Remove the model feedback part and clean up
-        let displayFeedback = feedbackStr.replace(/\s*\|\s*Feedback:.*/, "");
-        messages.push(displayFeedback);
-      }
-      lastFeedbackRef.current[side] = feedbackStr;
-    }
 
-    // Model feedback - only announce when it changes
-    const modelMsg = modelFeedback[side];
-    const lastModelMsg = lastModelFeedbackRef.current[side];
-    
-    if (modelMsg && modelMsg !== "none" && modelMsg !== lastModelMsg) {
-      const modelTextMap = {
+    const feedbackStr = feedback?.[side] || "";
+    const extracted = extractFeedbackLabel(feedbackStr);
+
+    /* ---------- REP DETECTED ---------- */
+    if (count > lastCount) {
+      lastCountersRef.current[side] = count;
+
+      console.log(`🎯 REP DETECTED [${side}]:`, count);
+
+      // 🔒 LATCH feedback at rep moment
+      if (extracted !== "none") {
+        feedbackLatchRef.current[side] = extracted;
+        console.log(
+          `🔒 FEEDBACK LATCHED [${side}]:`,
+          extracted
+        );
+      }
+
+      // 🗣️ Compose speech using latched feedback
+      const feedbackMap = {
         correct: "excellent form",
         elbow_out_of_place: "keep your elbow closer to your body",
         partial_motion: "increase your range of motion",
       };
-      const naturalMsg = modelTextMap[modelMsg] || modelMsg;
-      messages.push(naturalMsg);
-      lastModelFeedbackRef.current[side] = modelMsg;
+
+      const latched = feedbackLatchRef.current[side];
+      const spokenFeedback =
+        latched && feedbackMap[latched]
+          ? feedbackMap[latched]
+          : latched;
+
+      const msg = spokenFeedback
+        ? `${count} reps, ${spokenFeedback}`
+        : `${count} reps`;
+
+      console.log("🎤 FINAL AUDIO:", msg);
+
+      messages.push(msg);
+
+      // 🔓 Clear latch AFTER speaking
+      feedbackLatchRef.current[side] = null;
     }
   }
 
-  return messages.length > 0 ? messages.join(". ") : "";
+  return messages.length ? messages.join(". ") : "";
 };
 
-const useSpeechFeedback = (counters, feedback, modelFeedback) => {
+/* ----------- HOOK ----------- */
+const useSpeechFeedback = (counters, feedback) => {
   const [audioEnabled, setAudioEnabled] = useState(false);
-  const lastMessageRef = useRef("");
+
   const lastCountersRef = useRef({});
-  const lastModelFeedbackRef = useRef({});
-  const messageQueueRef = useRef([]);
+  const feedbackLatchRef = useRef({});
   const speakingRef = useRef(false);
+  const queueRef = useRef([]);
 
   const enableAudio = () => {
-    // Trigger a dummy utterance to unlock speech synthesis with user interaction
     const dummy = new SpeechSynthesisUtterance("");
     window.speechSynthesis.speak(dummy);
     window.speechSynthesis.cancel();
     setAudioEnabled(true);
-    console.log("🎤 Audio enabled");
+    console.log("🎤 AUDIO ENABLED");
   };
 
-  const speakMessage = (msg) => {
+  const speak = (msg) => {
     if (!msg || speakingRef.current || !audioEnabled) return;
 
-    console.log("🎤 Attempting to speak:", msg);
-
     speakingRef.current = true;
+    console.log("🗣️ SPEAKING:", msg);
+
     const utterance = new SpeechSynthesisUtterance(msg);
-    utterance.rate = 1.2;
-    utterance.pitch = 1;
-    utterance.volume = 1;
+    utterance.rate = 1.1;
     utterance.lang = "en-US";
 
-    utterance.onstart = () => {
-      console.log("✅ Speech STARTED");
-    };
-
     utterance.onend = () => {
-      console.log("✅ Speech ENDED");
       speakingRef.current = false;
-      if (messageQueueRef.current.length > 0) {
-        const nextMsg = messageQueueRef.current.shift();
-        speakMessage(nextMsg);
+      if (queueRef.current.length) {
+        speak(queueRef.current.shift());
       }
     };
 
-    utterance.onerror = (e) => {
-      console.error("❌ Speech ERROR:", e.error);
+    utterance.onerror = () => {
       speakingRef.current = false;
-      if (messageQueueRef.current.length > 0) {
-        const nextMsg = messageQueueRef.current.shift();
-        speakMessage(nextMsg);
-      }
     };
 
-    console.log("🎤 Speaking:", msg);
     window.speechSynthesis.speak(utterance);
   };
 
   useEffect(() => {
     if (!audioEnabled) return;
 
-    // Create natural language text from feedback
-    const naturalText = convertToNaturalLanguage(counters, feedback, modelFeedback, lastCountersRef, lastModelFeedbackRef);
-
-    console.log("Feedback Update:", {
-      naturalText,
-      lastMessage: lastMessageRef.current,
+    const msg = convertToNaturalLanguage(
       counters,
-      modelFeedback,
-    });
+      feedback,
+      lastCountersRef,
+      feedbackLatchRef
+    );
 
-    // If new message is different, add to queue and speak
-    if (naturalText && naturalText !== lastMessageRef.current) {
-      lastMessageRef.current = naturalText;
-      messageQueueRef.current.push(naturalText);
-
-      // Start speaking if not already speaking
+    if (msg) {
+      queueRef.current.push(msg);
       if (!speakingRef.current) {
-        const msg = messageQueueRef.current.shift();
-        speakMessage(msg);
+        speak(queueRef.current.shift());
       }
     }
-  }, [counters, feedback, modelFeedback, audioEnabled]);
+  }, [counters, feedback, audioEnabled]);
 
-  // Cleanup on unmount
   useEffect(() => {
-    return () => {
-      window.speechSynthesis.cancel();
-    };
+    return () => window.speechSynthesis.cancel();
   }, []);
 
   return { audioEnabled, enableAudio };
