@@ -1,6 +1,6 @@
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 import cv2
-from final_bicep_tracker import process_bicep  # Import your bicep processing function
+from bicep_processor import process_bicep_frame, get_status  # auto-detection processor
 from final_squat_tracker import process_frame as process_squat  # Import your squat processing function
 from neck_tracker import process_neck
 from flask_cors import CORS
@@ -10,21 +10,16 @@ CORS(app)
 # Single global webcam capture object
 cap = cv2.VideoCapture(0)
 # Global to store latest counters and feedback
-latest_status = {"counters": {"left": 0, "right": 0}, "feedback": {"left": "not detected", "right": "not detected"}}
 latest_neck = {"count": 0}
 
 @app.route("/bicep/live")
 def bicep_live():
     def generate():
-        global latest_status
         while True:
             ret, frame = cap.read()
             if not ret:
                 continue
-            counters, feedback, overlay = process_bicep(frame)
-            # Update latest status
-            latest_status["counters"] = counters
-            latest_status["feedback"] = feedback
+            counters, feedback, overlay = process_bicep_frame(frame)
 
             _, buffer = cv2.imencode('.jpg', overlay)
             yield (b'--frame\r\n'
@@ -33,11 +28,13 @@ def bicep_live():
 
 @app.route("/bicep/status")
 def bicep_status():
-    # Simply return the latest processed counters/feedback
+    # Return current processor status - auto-detection handles everything
+    status = get_status()
     return jsonify({
         "exercise": "bicep",
-        "counters": latest_status["counters"],
-        "feedback": latest_status["feedback"]
+        "counters": status.get("counters"),
+        "feedback": status.get("feedback"),
+        "collecting": status.get("collecting")
     })
 
 

@@ -4,15 +4,17 @@ import { Link } from "react-router-dom";
 const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
   const [counters, setCounters] = useState({});
   const [feedback, setFeedback] = useState({});
+  const [model_feedback, setModelFeedback] = useState({});
 
   useEffect(() => {
     const interval = setInterval(async () => {
       try {
         const res = await fetch(statusUrl);
         const data = await res.json();
-        const { counters, feedback } = mapData(data);
+        const { counters, feedback, model_feedback } = mapData(data);
         setCounters(counters);
         setFeedback(feedback);
+        setModelFeedback(model_feedback || {});
       } catch (err) {
         console.error(`Error fetching ${title} status:`, err);
       }
@@ -199,7 +201,7 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
 
             {Object.keys(counters).map((key) => (
               <p key={key}>
-                {key}: {counters[key]} | {feedback[key] ?? ""}
+                <strong>{key}:</strong> {counters[key]} reps | {feedback[key] ?? ""} {model_feedback[key] && model_feedback[key] !== "none" ? `| 🤖 ${model_feedback[key]}` : ""}
               </p>
             ))}
           </div>

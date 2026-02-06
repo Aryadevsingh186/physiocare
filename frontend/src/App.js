@@ -30,11 +30,11 @@ function App() {
         <Route path="/report-test" element={<ReportTest />} />
 
         {/* Protected routes wrapper */}
-        <Route element={<ProtectedRoute />}>
+        {/* <Route element={<ProtectedRoute />}> */}
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/progress" element={<Progress />} />
           <Route path="/userprofile" element={<UserProfile/>}></Route>
-        </Route>
+        {/* </Route> */}
       </Routes>
     </Router>
   );
