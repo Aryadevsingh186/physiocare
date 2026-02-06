@@ -1,10 +1,15 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import SessionTimer from "./SessionTimer";
+import useSpeechFeedback from "./useSpeechFeedback";
 
 const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
   const [counters, setCounters] = useState({});
   const [feedback, setFeedback] = useState({});
   const [model_feedback, setModelFeedback] = useState({});
+
+  // Enable audio feedback
+  const { audioEnabled, enableAudio } = useSpeechFeedback(counters, feedback, model_feedback);
 
   useEffect(() => {
     const interval = setInterval(async () => {
@@ -24,13 +29,7 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
   }, [statusUrl, title, mapData]);
 
   return (
-    <div
-      style={{
-        background: "#f9fafb",
-        minHeight: "100vh",
-        color: "#232323"
-      }}
-    >
+    <div style={{ background: "#f9fafb", minHeight: "100vh", color: "#232323" }}>
       {/* Header */}
       <div
         style={{
@@ -71,64 +70,66 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
           gap: 34,
         }}
       >
-        <div style={{ display: "flex", gap: 32, marginBottom: 10 }}>
+        <div style={{ display: "flex", gap: 32, marginBottom: 10, position: "relative" }}>
           {/* AI Instructor block */}
-          {/* AI Instructor block */}
-<div
-  style={{
-    flex: 1,
-    background: "#fff",
-    borderRadius: 10,
-    padding: "30px 28px",
-    minWidth: 350,
-    boxShadow: "0 2px 12px rgba(42,53,112,0.1)",
-    display: "flex",
-    flexDirection: "column",
-    justifyContent: "space-between",
-    alignItems: "center",
-  }}
->
-  <div
-    style={{
-      display: "flex",
-      justifyContent: "space-between",
-      alignItems: "center",
-      marginBottom: 7,
-      width: "100%",
-    }}
-  >
-    <div style={{ fontWeight: 700, fontSize: "1.26rem" }}>AI Instructor</div>
-    <span
-      style={{
-        fontSize: "0.98rem",
-        background: "#eef3fc",
-        color: "#232323",
-        borderRadius: 10,
-        padding: "7px 18px",
-      }}
-    >
-      Demo
-    </span>
-  </div>
+          <div
+            style={{
+              flex: 1,
+              background: "#fff",
+              borderRadius: 10,
+              padding: "30px 28px",
+              minWidth: 350,
+              boxShadow: "0 2px 12px rgba(42,53,112,0.1)",
+              display: "flex",
+              flexDirection: "column",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 7,
+                width: "100%",
+              }}
+            >
+              <div style={{ fontWeight: 700, fontSize: "1.26rem" }}>AI Instructor</div>
+              <button
+                onClick={enableAudio}
+                style={{
+                  fontSize: "0.85rem",
+                  background: audioEnabled ? "#4CAF50" : "#eef3fc",
+                  color: audioEnabled ? "#fff" : "#232323",
+                  border: "none",
+                  borderRadius: 10,
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                }}
+              >
+                {audioEnabled ? "🎤 Audio On" : "🎤 Enable Audio"}
+              </button>
+            </div>
 
-  {/* Video instead of placeholder */}
-  <video
-    src={ title === "Squats" ? "/videos/squat.mp4" : ( title === "BicepCurls" ? "/videos/bicepcurl.mp4" : "/videos/neck.mp4")}
-    autoPlay
-    muted
-    loop
-    playsInline
-    style={{
-      width: "100%" ,
-      maxHeight: 280,
-      borderRadius: 10,
-      objectFit: "cover",
-      background: "#000",
-    }}
-  />
+            {/* Video instead of placeholder */}
+            <video
+              src={ title === "Squats" ? "/videos/squat.mp4" : ( title === "BicepCurls" ? "/videos/bicepcurl.mp4" : "/videos/neck.mp4")}
+              autoPlay
+              muted
+              loop
+              playsInline
+              style={{
+                width: "100%",
+                maxHeight: 280,
+                borderRadius: 10,
+                objectFit: "cover",
+                background: "#000",
+              }}
+            />
+          </div>
 
-
-</div>
           {/* Your Form block */}
           <div
             style={{
@@ -158,6 +159,7 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
             >
               <span style={{ fontWeight: 700, fontSize: 24 }}>Your Form</span>
             </div>
+
             {/* Live MJPEG stream from Flask */}
             <img
               src={liveUrl}
@@ -170,6 +172,20 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
                 background: "#000",
               }}
             />
+          </div>
+
+          {/* Session timer absolutely positioned */}
+          <div
+            style={{
+              position: "absolute",
+              right: 0,
+              top: -50,
+              padding: "10px 12px",
+              borderRadius: 8,
+              zIndex: 20,
+            }}
+          >
+            <SessionTimer storageKey={`session-${title}`} initialMinutes={3} autoStart={true} />
           </div>
         </div>
 
