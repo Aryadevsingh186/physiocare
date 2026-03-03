@@ -1,4 +1,5 @@
 import fetch from "node-fetch";
+import db from '../config/db.js'
 
 /**
  * Get squat status (count + feedback)
@@ -53,5 +54,44 @@ export const getBicepLive = async (req, res) => {
   } catch (err) {
     console.error("Error streaming bicep live:", err);
     res.status(500).json({ error: "Bicep live feed not available" });
+  }
+};
+
+// Start a new exercise session
+export const startSession = async (req, res) => {
+  try {
+    const { user_id, exercise_type } = req.body;
+
+    const result = await db.query(
+      `INSERT INTO exercise_sessions (user_id, exercise_type, scheduled_date, completed)
+       VALUES ($1, $2, NOW(), FALSE)
+       RETURNING session_id`,
+      [user_id, exercise_type]
+    );
+
+    res.json({ session_id: result.rows[0].session_id });
+  } catch (err) {
+    console.error("Start session error:", err);
+    res.status(500).json({ error: "Failed to start session" });
+  }
+};
+
+
+// Mark session as completed
+export const completeSession = async (req, res) => {
+  try {
+    const { session_id } = req.body;
+
+    await db.query(
+      `UPDATE exercise_sessions
+       SET completed = TRUE
+       WHERE session_id = $1`,
+      [session_id]
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Complete session error:", err);
+    res.status(500).json({ error: "Failed to complete session" });
   }
 };

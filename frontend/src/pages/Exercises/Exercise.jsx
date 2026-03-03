@@ -7,6 +7,7 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
   const [counters, setCounters] = useState({});
   const [feedback, setFeedback] = useState({});
   const [model_feedback, setModelFeedback] = useState({});
+  const [sessionId, setSessionId] = useState(null);
 
   // Enable audio feedback
   const { audioEnabled, enableAudio } = useSpeechFeedback(counters, feedback, model_feedback);
@@ -27,6 +28,46 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
 
     return () => clearInterval(interval);
   }, [statusUrl, title, mapData]);
+
+    useEffect(() => {
+    const startSession = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/exercise/session/start", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: 2, // replace later with real user
+            exercise_type: title.toLowerCase(),
+          }),
+        });
+
+        const data = await res.json();
+        setSessionId(data.session_id);
+        console.log("Session started:", data.session_id);
+      } catch (err) {
+        console.error("Failed to start session:", err);
+      }
+    };
+
+    startSession();
+  }, [title]);
+
+  // 🔥 Complete session when timer finishes
+  const handleSessionComplete = async () => {
+    if (!sessionId) return;
+
+    try {
+      await fetch("http://localhost:5000/api/exercise/session/complete", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+
+      console.log("Session completed");
+    } catch (err) {
+      console.error("Error completing session:", err);
+    }
+  };
 
   return (
     <div style={{ background: "#f9fafb", minHeight: "100vh", color: "#232323" }}>
@@ -185,7 +226,7 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
               zIndex: 20,
             }}
           >
-            <SessionTimer storageKey={`session-${title}`} initialMinutes={3} autoStart={true} />
+            <SessionTimer storageKey={`session-${title}`} initialMinutes={3} autoStart={true} onFinish={handleSessionComplete} />
           </div>
         </div>
 

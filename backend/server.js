@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import exerciseRoutes from "./routes/exerciseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import userProfileRoutes from "./routes/userprofileRoutes.js";
+import startMissedExerciseCron from "./services/missedExerciseCron.js";
 
 const app = express();
 app.use(cors());
@@ -28,6 +29,7 @@ app.use((err, req, res, next) => {
   res.status(500).json({ success: false, message: "Internal Server Error" });
 });
 
+startMissedExerciseCron();
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
