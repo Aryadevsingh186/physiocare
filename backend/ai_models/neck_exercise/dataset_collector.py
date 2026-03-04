@@ -3,7 +3,7 @@ import cv2
 import numpy as np
 import tensorflow as tf
 
-from rep_segmenter import RepBuffer
+from backend.ai_models.neck_exercise.neck_rep_segmenter import RepBuffer
 from dataset_logger import log_rep
 from angle_utils import calculate_angle
 

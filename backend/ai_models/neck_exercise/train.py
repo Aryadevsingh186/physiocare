@@ -1,17 +1,15 @@
 import pandas as pd
-from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.pipeline import Pipeline
 from sklearn.svm import SVC
-from sklearn.linear_model import LogisticRegression
-from sklearn.ensemble import RandomForestClassifier
-import joblib
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import Pipeline
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import joblib
 
 # -------------------------------
 # 1. Load dataset
 # -------------------------------
-df = pd.read_csv("edited.csv")  # your dataset with neck_forward_shift
+df = pd.read_csv("edited.csv")
 
 # -------------------------------
 # 2. Split features & label
@@ -19,7 +17,6 @@ df = pd.read_csv("edited.csv")  # your dataset with neck_forward_shift
 X = df.drop(columns=["label"])
 y = df["label"]
 
-# Encode labels
 le = LabelEncoder()
 y_encoded = le.fit_transform(y)
 
@@ -27,23 +24,24 @@ y_encoded = le.fit_transform(y)
 # 3. Train-test split
 # -------------------------------
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y_encoded, test_size=0.2, random_state=42, stratify=y_encoded
+    X, y_encoded,
+    test_size=0.2,
+    random_state=42,
+    stratify=y_encoded
 )
 
 # -------------------------------
-# 4. Train random forest using best-known hyperparameters
+# 4. SVM Pipeline (RBF Kernel)
 # -------------------------------
 model = Pipeline([
     ("scaler", StandardScaler()),
-    (
-        "clf",
-        RandomForestClassifier(
-            n_estimators=50,
-            max_depth=3,
-            class_weight="balanced",
-            random_state=42
-        )
-    )
+    ("clf", SVC(
+        kernel="rbf",
+        C=1.0,
+        gamma="scale",
+        class_weight="balanced",
+        probability=True
+    ))
 ])
 
 # -------------------------------
@@ -51,21 +49,29 @@ model = Pipeline([
 # -------------------------------
 model.fit(X_train, y_train)
 
-print("Trained RandomForest with fixed parameters: n_estimators=50, max_depth=3")
-
 # -------------------------------
-# 6. Evaluate on held-out test set
+# 6. Evaluate
 # -------------------------------
 y_pred = model.predict(X_test)
+
+print("===== SVM RESULTS =====")
 print("Test Accuracy:", accuracy_score(y_test, y_pred))
-print("\nClassification Report:\n", classification_report(y_test, y_pred))
+
+print("\nClassification Report:\n",
+      classification_report(
+          y_test,
+          y_pred,
+          labels=range(len(le.classes_)),
+          target_names=le.classes_,
+          zero_division=0
+      ))
+
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
 
-
 # -------------------------------
-# 7. Save model and encoder
+# 7. Save
 # -------------------------------
 joblib.dump(model, "rep_svm_model.pkl")
 joblib.dump(le, "label_encoder.pkl")
 
-print("SVM model trained and saved successfully!")
+print("\nSVM model saved successfully!")
