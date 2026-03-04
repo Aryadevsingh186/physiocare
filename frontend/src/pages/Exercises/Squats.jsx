@@ -6,8 +6,9 @@ const Squats = () => (
     statusUrl="http://localhost:5001/squat/status"
     liveUrl="http://localhost:5001/squat/live"
     mapData={(data) => ({
-      counters: { squat: data.count }, // map count → squat
-      feedback: { squat: data.feedback }, // map feedback → squat
+      counters: data.counters || {},
+      feedback: data.feedback || {},
+      model_feedback: data.model_feedback || {}
     })}
   />
 );

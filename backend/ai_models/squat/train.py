@@ -1,8 +1,10 @@
 import pandas as pd
-from sklearn.svm import SVC
+from sklearn.model_selection import train_test_split, GridSearchCV, StratifiedKFold
 from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
 from sklearn.pipeline import Pipeline
+from sklearn.svm import SVC
+from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble import RandomForestClassifier
 import joblib
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 
@@ -29,11 +31,19 @@ X_train, X_test, y_train, y_test = train_test_split(
 )
 
 # -------------------------------
-# 4. SVM pipeline with scaling
+# 4. Train random forest using best-known hyperparameters
 # -------------------------------
 model = Pipeline([
     ("scaler", StandardScaler()),
-    ("clf", SVC(kernel="linear", C=0.5, class_weight="balanced", probability=True))
+    (
+        "clf",
+        RandomForestClassifier(
+            n_estimators=50,
+            max_depth=3,
+            class_weight="balanced",
+            random_state=42
+        )
+    )
 ])
 
 # -------------------------------
@@ -41,13 +51,16 @@ model = Pipeline([
 # -------------------------------
 model.fit(X_train, y_train)
 
+print("Trained RandomForest with fixed parameters: n_estimators=50, max_depth=3")
+
 # -------------------------------
-# 6. Evaluate
+# 6. Evaluate on held-out test set
 # -------------------------------
 y_pred = model.predict(X_test)
 print("Test Accuracy:", accuracy_score(y_test, y_pred))
 print("\nClassification Report:\n", classification_report(y_test, y_pred))
 print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+
 
 # -------------------------------
 # 7. Save model and encoder
