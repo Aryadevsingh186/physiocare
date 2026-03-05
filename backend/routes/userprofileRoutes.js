@@ -1,58 +1,13 @@
 import express from "express";
-import jwt from "jsonwebtoken";
 import supabase from "../config/supabase.js";
+import { verifyToken, verifyPatient } from "../middleware/authMiddleware.js";
 
 const router = express.Router();
-const JWT_SECRET = process.env.JWT_SECRET || "secretkey";
 
 /* ===================================================
-   🔐 TOKEN VERIFICATION (UUID safe)
+   👤 GET PROFILE (PATIENT ONLY)
    =================================================== */
-const verifyToken = (req, res, next) => {
-  const authHeader = req.headers["authorization"];
-
-  if (!authHeader) {
-    return res.status(401).json({
-      success: false,
-      message: "No token provided",
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(401).json({
-      success: false,
-      message: "Token missing",
-    });
-  }
-
-  try {
-    const decoded = jwt.verify(token, JWT_SECRET);
-
-    if (!decoded.user_id) {
-      return res.status(400).json({
-        success: false,
-        message: "user_id missing in token",
-      });
-    }
-
-    // ✅ UUID → keep as string (NO parseInt)
-    req.user = { user_id: decoded.user_id };
-
-    next();
-  } catch (err) {
-    return res.status(403).json({
-      success: false,
-      message: "Invalid token",
-    });
-  }
-};
-
-/* ===================================================
-   👤 GET PROFILE
-   =================================================== */
-router.get("/profile", verifyToken, async (req, res) => {
+router.get("/profile", verifyToken, verifyPatient, async (req, res) => {
   try {
     const userId = req.user.user_id;
 
@@ -83,9 +38,9 @@ router.get("/profile", verifyToken, async (req, res) => {
 });
 
 /* ===================================================
-   ✏️ UPDATE PROFILE
+   ✏️ UPDATE PROFILE (PATIENT ONLY)
    =================================================== */
-router.put("/update", verifyToken, async (req, res) => {
+router.put("/update", verifyToken, verifyPatient, async (req, res) => {
   try {
     let { name, age, gender, phone } = req.body;
 
@@ -98,7 +53,6 @@ router.put("/update", verifyToken, async (req, res) => {
 
     const userId = req.user.user_id;
 
-    // Normalize values
     const updates = {
       name: name || null,
       gender: gender || null,

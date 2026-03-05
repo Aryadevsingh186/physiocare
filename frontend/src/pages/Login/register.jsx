@@ -2,31 +2,50 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
-  const [role, setRole] = useState("user");
+  const [role, setRole] = useState("patient"); // ✅ FIXED
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [age, setAge] = useState("");
   const [gender, setGender] = useState("M");
   const [phone, setPhone] = useState("");
+  const [loading, setLoading] = useState(false);
+
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(true);
 
-    const response = await fetch("http://localhost:5000/api/auth/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password, role, age, gender, phone }),
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name,
+          email,
+          password,
+          role, // will now be 'patient' or 'doctor'
+          age: age ? parseInt(age) : null,
+          gender,
+          phone,
+        }),
+      });
 
-    const data = await response.json();
-    if (data.success) {
-      alert("Registration successful");
-      navigate("/login");
-    } else {
-      alert("Registration failed: " + data.message);
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        alert("Registration successful!");
+        navigate("/login");
+      } else {
+        alert(data.message || "Registration failed");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Server error. Please try again.");
     }
+
+    setLoading(false);
   };
 
   return (
@@ -40,52 +59,18 @@ const Register = () => {
         padding: "20px",
       }}
     >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          background: "#fff",
-          borderRadius: "16px",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          padding: "36px 32px",
-          width: "100%",
-          maxWidth: "410px",
-          display: "flex",
-          flexDirection: "column",
-        }}
-      >
-        {/* Back Button */}
+      <form onSubmit={handleSubmit} style={formStyle}>
         <button
           type="button"
           onClick={() => navigate("/login")}
-          style={{
-            background: "#0D0D16",
-            color: "#fff",
-            border: "none",
-            padding: "8px 16px",
-            borderRadius: "8px",
-            width: "fit-content",
-            fontWeight: "500",
-            marginBottom: "16px",
-            cursor: "pointer",
-          }}
+          style={backButtonStyle}
         >
           ← Back
         </button>
 
-        {/* Heading */}
-        <h2
-          style={{
-            textAlign: "center",
-            fontWeight: "600",
-            marginBottom: "22px",
-            fontSize: "1.9rem",
-          }}
-        >
-          Create Account
-        </h2>
+        <h2 style={headingStyle}>Create Account</h2>
 
-        {/* Input Fields */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+        <div style={fieldContainer}>
           <label>Name</label>
           <input
             type="text"
@@ -102,7 +87,7 @@ const Register = () => {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            placeholder="patient@example.com"
+            placeholder="example@email.com"
             style={inputStyle}
           />
 
@@ -122,8 +107,8 @@ const Register = () => {
             onChange={(e) => setRole(e.target.value)}
             style={inputStyle}
           >
-            <option value="user">Patient</option>
-            <option value="doctor">Doctor/Physio</option>
+            <option value="patient">Patient</option>
+            <option value="doctor">Doctor / Physio</option>
           </select>
 
           <label>Age</label>
@@ -156,38 +141,14 @@ const Register = () => {
           />
         </div>
 
-        {/* Register Button */}
-        <button
-          type="submit"
-          style={{
-            background: "#181822",
-            color: "#fff",
-            borderRadius: "6px",
-            padding: "13px 0",
-            fontSize: "1.1rem",
-            border: "none",
-            marginTop: "20px",
-            cursor: "pointer",
-            transition: "0.3s",
-          }}
-        >
-          Register
+        <button type="submit" disabled={loading} style={submitButtonStyle}>
+          {loading ? "Registering..." : "Register"}
         </button>
 
-        {/* Login Redirect */}
         <button
           type="button"
           onClick={() => navigate("/login")}
-          style={{
-            marginTop: "12px",
-            background: "#fff",
-            border: "1px solid #e5e5e7",
-            color: "#232323",
-            borderRadius: "6px",
-            padding: "11px 0",
-            fontSize: "1.1rem",
-            cursor: "pointer",
-          }}
+          style={secondaryButtonStyle}
         >
           Already have an account? Login
         </button>
@@ -196,14 +157,71 @@ const Register = () => {
   );
 };
 
-// Reusable input styling
+/* ------------------ Styles ------------------ */
+
+const formStyle = {
+  background: "#fff",
+  borderRadius: "16px",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+  padding: "36px 32px",
+  width: "100%",
+  maxWidth: "410px",
+  display: "flex",
+  flexDirection: "column",
+};
+
+const fieldContainer = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+};
+
 const inputStyle = {
   border: "1px solid #ddd",
   borderRadius: "6px",
   padding: "10px 12px",
   fontSize: "1rem",
-  outline: "none",
-  transition: "border-color 0.3s ease",
+};
+
+const backButtonStyle = {
+  background: "#0D0D16",
+  color: "#fff",
+  border: "none",
+  padding: "8px 16px",
+  borderRadius: "8px",
+  width: "fit-content",
+  fontWeight: "500",
+  marginBottom: "16px",
+  cursor: "pointer",
+};
+
+const submitButtonStyle = {
+  background: "#181822",
+  color: "#fff",
+  borderRadius: "6px",
+  padding: "13px 0",
+  fontSize: "1.1rem",
+  border: "none",
+  marginTop: "20px",
+  cursor: "pointer",
+};
+
+const secondaryButtonStyle = {
+  marginTop: "12px",
+  background: "#fff",
+  border: "1px solid #e5e5e7",
+  color: "#232323",
+  borderRadius: "6px",
+  padding: "11px 0",
+  fontSize: "1.1rem",
+  cursor: "pointer",
+};
+
+const headingStyle = {
+  textAlign: "center",
+  fontWeight: "600",
+  marginBottom: "22px",
+  fontSize: "1.9rem",
 };
 
 export default Register;
