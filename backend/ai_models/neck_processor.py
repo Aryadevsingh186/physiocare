@@ -9,6 +9,7 @@ from collections import deque
 from neck_exercise.neck_rep_segmenter import RepBuffer
 from neck_exercise.angle_utils import calculate_angle
 
+import time
 
 # -------------------------------
 # Paths
@@ -89,6 +90,18 @@ NOSE_DELTA_THRESHOLD = 3
 
 min_confidence = 0.3
 
+import time
+
+# Add these globals at top (outside function)
+frame_id = 0
+last_rep_time = 0
+
+FRAME_SKIP = 3
+COOLDOWN = 1.2
+MIN_FRAMES = 15
+
+CHIN_UP_THRESHOLD = 8
+CHIN_DOWN_THRESHOLD = -5
 
 # -------------------------------
 # MoveNet
@@ -362,6 +375,5 @@ def process_neck_frame(frame):
 
     if feedback_persist["neck"] > 0:
         feedback_persist["neck"] -= 1
-
 
     return counters.copy(), feedback.copy(), overlay
