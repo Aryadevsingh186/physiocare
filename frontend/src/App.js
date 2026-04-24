@@ -15,7 +15,9 @@ import ProtectedRoute from "./pages/Login/ProtectedRoute";
 import UserProfile from "./pages/Dashboard/userprofile";
 import PostureCheckPage from "./pages/Exercises/instructions.jsx";
 import LegExtension from "./pages/Exercises/LegExtention.jsx";
-
+import NeckExercisePostureCheckPage from "./pages/Exercises/posture/NeckExercisePostureCheckPage";
+import LegExtensionPostureCheckPage from "./pages/Exercises/posture/LegExtensionPostureCheckPage";
+import SquatPostureCheckPage from "./pages/Exercises/posture/SquatPostureCheckPage.jsx";
 function App() {
   return (
     <Router>
@@ -30,7 +32,7 @@ function App() {
         <Route path="/Neck" element={<Neck />} />
         <Route path="/report" element={<Report />} />
         <Route path="/report-test" element={<ReportTest />} />
-        <Route path="/posture" element={<PostureCheckPage />} />
+        <Route path="/posture" element={<SquatPostureCheckPage/>} />
        <Route path="/LegExtention" element={<LegExtension />} />
 
         {/* Protected routes wrapper */}
