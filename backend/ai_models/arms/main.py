@@ -21,8 +21,8 @@ input_height, input_width = input_details[0]['shape'][1:3]
 # -------------------------------
 # Load Model
 # -------------------------------
-model = joblib.load("arm_svm_model_1.pkl")
-le = joblib.load("arm_label_encoder_1.pkl")
+model = joblib.load("arm_svm_model.pkl")
+le = joblib.load("arm_label_encoder.pkl")
 
 # ✅ MUST match your dataset EXACTLY
 FEATURE_ORDER = [

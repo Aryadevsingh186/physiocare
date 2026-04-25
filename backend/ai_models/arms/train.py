@@ -1,10 +1,11 @@
 import pandas as pd
-from sklearn.svm import SVC
-from sklearn.preprocessing import StandardScaler, LabelEncoder
-from sklearn.model_selection import train_test_split
-from sklearn.pipeline import Pipeline
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
 import joblib
+
+from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_predict
+from sklearn.metrics import classification_report, confusion_matrix
 
 # -------------------------------
 # 1. Load dataset
@@ -12,86 +13,94 @@ import joblib
 df = pd.read_csv("arm_raise_dataset_1.csv")
 
 # -------------------------------
-# 2. CLEAN DATA
+# 2. Clean dataset
 # -------------------------------
 df = df[df["label"] != "NA"]
-
-df = df[
-    (df["r_shoulder_range"] > 10) &
-    (df["l_shoulder_range"] > 10) &
-    (df["frames"] > 10)
-]
-
+df = df[df["frames"] > 10]
 df = df.reset_index(drop=True)
 
-# Fix asymmetry
+# Fix asymmetry feature
 df["shoulder_asymmetry"] = abs(
     df["r_shoulder_range"] - df["l_shoulder_range"]
 )
 
-print("\nClass distribution:\n", df["label"].value_counts())
+print("\nClass Distribution:")
+print(df["label"].value_counts())
 
 # -------------------------------
-# 3. Split features & label
+# 3. Features and labels
 # -------------------------------
 X = df.drop(columns=["label"])
 y = df["label"]
 
+# Encode labels
 le = LabelEncoder()
 y_encoded = le.fit_transform(y)
 
 # -------------------------------
-# 4. Train-test split
-# -------------------------------
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y_encoded,
-    test_size=0.2,
-    random_state=42,
-    stratify=y_encoded
-)
-
-# -------------------------------
-# 5. Model
+# 4. Model Pipeline
 # -------------------------------
 model = Pipeline([
     ("scaler", StandardScaler()),
     ("clf", SVC(
-        kernel="rbf",
-        C=1.0,
-        gamma="scale",
-        class_weight="balanced",
-        probability=True
+        kernel="linear",       # simpler, less overfitting
+        C=0.1,
+        class_weight="balanced"
     ))
 ])
 
 # -------------------------------
-# 6. Train
+# 5. Stratified K-Fold CV
 # -------------------------------
-model.fit(X_train, y_train)
+cv = StratifiedKFold(
+    n_splits=5,
+    shuffle=True,
+    random_state=42
+)
 
-# -------------------------------
-# 7. Evaluate
-# -------------------------------
-y_pred = model.predict(X_test)
+# Cross-validation accuracy
+scores = cross_val_score(
+    model,
+    X,
+    y_encoded,
+    cv=cv
+)
 
-print("\n===== SVM RESULTS =====")
-print("Test Accuracy:", accuracy_score(y_test, y_pred))
-
-print("\nClassification Report:\n",
-      classification_report(
-          y_test,
-          y_pred,
-          labels=range(len(le.classes_)),
-          target_names=le.classes_,
-          zero_division=0
-      ))
-
-print("\nConfusion Matrix:\n", confusion_matrix(y_test, y_pred))
+print("\n===== CROSS VALIDATION RESULTS =====")
+print("Fold Accuracies:", scores)
+print("Mean Accuracy:", scores.mean())
+print("Std Dev:", scores.std())
 
 # -------------------------------
-# 8. Save
+# 6. Cross-validated predictions
 # -------------------------------
-joblib.dump(model, "arm_svm_model_1.pkl")
-joblib.dump(le, "arm_label_encoder_1.pkl")
+y_pred = cross_val_predict(
+    model,
+    X,
+    y_encoded,
+    cv=cv
+)
 
-print("\nSVM model saved successfully!")
+print("\n===== CLASSIFICATION REPORT =====")
+print(classification_report(
+    y_encoded,
+    y_pred,
+    target_names=le.classes_,
+    zero_division=0
+))
+
+print("\n===== CONFUSION MATRIX =====")
+print(confusion_matrix(y_encoded, y_pred))
+
+# -------------------------------
+# 7. Train final model on full data
+# -------------------------------
+model.fit(X, y_encoded)
+
+# -------------------------------
+# 8. Save model
+# -------------------------------
+joblib.dump(model, "arm_svm_model.pkl")
+joblib.dump(le, "arm_label_encoder.pkl")
+
+print("\nModel saved successfully!")
