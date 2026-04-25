@@ -5,6 +5,7 @@ import authRoutes from "./routes/authRoutes.js";
 import exerciseRoutes from "./routes/exerciseRoutes.js";
 import reportRoutes from "./routes/reportRoutes.js";
 import userProfileRoutes from "./routes/userprofileRoutes.js";
+import doctorRoutes from "./routes/doctorRoutes.js";
 
 const app = express();
 app.use(cors());
@@ -14,6 +15,7 @@ app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/exercise", exerciseRoutes);
 app.use("/api/report", reportRoutes);
+app.use("/api/doctor", doctorRoutes);
 
 //PORT 
 const PORT = process.env.PORT || 5000

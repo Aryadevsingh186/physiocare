@@ -13,6 +13,7 @@ import ReportTest from "./pages/ReportTest";
 import Register from "./pages/Login/register";
 import ProtectedRoute from "./pages/Login/ProtectedRoute";
 import UserProfile from "./pages/Dashboard/userprofile";
+import DoctorPortal from "./pages/DoctorPortal/DoctorPortal";
 import PostureCheckPage from "./pages/Exercises/instructions.jsx";
 import LegExtension from "./pages/Exercises/LegExtention.jsx";
 import NeckExercisePostureCheckPage from "./pages/Exercises/posture/NeckExercisePostureCheckPage";
@@ -32,6 +33,7 @@ function App() {
         <Route path="/Neck" element={<Neck />} />
         <Route path="/report" element={<Report />} />
         <Route path="/report-test" element={<ReportTest />} />
+        <Route path="/doctor-portal" element={<DoctorPortal />} />
         <Route path="/posture" element={<SquatPostureCheckPage/>} />
        <Route path="/LegExtention" element={<LegExtension />} />
 

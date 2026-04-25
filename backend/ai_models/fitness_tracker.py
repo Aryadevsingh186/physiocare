@@ -1,14 +1,10 @@
-from flask import Flask, Response, jsonify
+from flask import Flask, Response, jsonify, request
 import cv2
 from bicep_processor import process_bicep_frame, get_status  # auto-detection processor
 from squat.squat_processor import process_squat_frame, get_status as squat_get_status  # import from squat package
 from neck_tracker import process_neck
 from flask_cors import CORS
-
-from bicep_processor import process_bicep_frame, get_status
-from final_squat_tracker import process_frame as process_squat
-from neck_processor import process_neck_frame, get_status as get_neck_status
-
+from physio_agent import PhysioAgent
 
 app = Flask(__name__)
 CORS(app)
@@ -21,6 +17,9 @@ cap = cv2.VideoCapture(0)
 # BICEP ROUTES
 # ==========================
 
+agent_sessions = {}
+
+# ================== BICEP ==================
 @app.route("/bicep/live")
 def bicep_live():
 
@@ -62,6 +61,11 @@ def bicep_status():
 # SQUAT ROUTES
 # ==========================
 
+# ==========================
+# SQUAT ROUTES
+# ==========================
+
+# ================== SQUAT ==================
 @app.route("/squat/live")
 def squat_live():
     print("[squat/live] 🔴 Endpoint called - starting generator")
@@ -143,6 +147,11 @@ def squat_status_route():
 # NECK ROUTES
 # ==========================
 
+# ==========================
+# NECK ROUTES
+# ==========================
+
+# ================== NECK ==================
 @app.route("/neck/live")
 def neck_live():
 
@@ -197,6 +206,46 @@ def neck_status():
         "collecting": status["collecting"].get("neck", False)
     })
 
+
+# ================== AGENT ==================
+@app.route("/agent/start", methods=["POST", "GET"])
+def start_agent():
+    if request.method == "GET":
+        return jsonify({"message": "Use POST"}), 405
+    data = request.json
+    session_id = data["session_id"]
+    exercise = data["exercise"]
+
+    agent_sessions[session_id] = PhysioAgent(exercise)
+
+    return jsonify({
+        "message": agent_sessions[session_id].get_prompt(),
+        "state": "READY"
+    })
+
+
+@app.route("/agent/update", methods=["POST", "GET"])
+def update_agent():
+    if request.method == "GET":
+        return jsonify({"message": "Use POST"}), 405
+    data = request.json
+    session_id = data["session_id"]
+    user_input = data.get("user_input", "")
+
+    agent = agent_sessions.get(session_id)
+    if not agent:
+        return jsonify({"error": "Session not found"}), 404
+
+    reps = latest_status["counters"]["left"]
+    feedback = latest_status["feedback"]["left"]
+
+    agent.update(user_input=user_input, feedback=feedback, reps=reps)
+
+    return jsonify({
+        "message": agent.get_prompt(),
+        "state": agent.state,
+        "reps": agent.rep_count
+    })
 
 # ==========================
 # MAIN

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import SessionTimer from "./SessionTimer";
 import useSpeechFeedback from "./useSpeechFeedback";
@@ -26,8 +26,9 @@ const Exercise = ({ title, statusUrl, liveUrl, mapData }) => {
     }, 500);
 
     return () => clearInterval(interval);
-  }, [statusUrl, title, mapData]);
+  }, [statusUrl, mapData]);
 
+  /* ---------------- UI ---------------- */
   return (
     <div style={{ background: "#f9fafb", minHeight: "100vh", color: "#232323" }}>
       {/* Header */}
