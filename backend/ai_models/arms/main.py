@@ -7,6 +7,7 @@ import pandas as pd
 from rep_segmenter import RepBuffer
 from dataset_logger import log_rep
 from angle_utils import calculate_angle
+from collections import deque
 
 # -------------------------------
 # Load MoveNet
@@ -19,12 +20,13 @@ output_details = interpreter.get_output_details()
 input_height, input_width = input_details[0]['shape'][1:3]
 
 # -------------------------------
-# Load Model
+# Load Model (UPDATED ONLY)
 # -------------------------------
-model = joblib.load("arm_svm_model.pkl")
+model = joblib.load("arm_hgb_model.pkl")
 le = joblib.load("arm_label_encoder.pkl")
 
-# ✅ MUST match your dataset EXACTLY
+pred_history = deque(maxlen=5)
+
 FEATURE_ORDER = [
     "r_shoulder_range",
     "l_shoulder_range",
@@ -46,6 +48,26 @@ KP = {
     "l_wrist": 9, "r_wrist": 10,
     "l_hip": 11, "r_hip": 12
 }
+
+# -------------------------------
+# NEW: Skeleton helpers (FROM YOUR COLLECTOR)
+# -------------------------------
+def draw_keypoints(frame, keypoints, threshold=0.4):
+    h, w, _ = frame.shape
+    for kp in keypoints:
+        y, x, conf = kp
+        if conf > threshold:
+            cx, cy = int(x * w), int(y * h)
+            cv2.circle(frame, (cx, cy), 5, (0, 255, 0), -1)
+
+
+def draw_connections(frame, keypoints, pairs, threshold=0.4):
+    h, w, _ = frame.shape
+    for p1, p2 in pairs:
+        if keypoints[p1][2] > threshold and keypoints[p2][2] > threshold:
+            x1, y1 = int(keypoints[p1][1] * w), int(keypoints[p1][0] * h)
+            x2, y2 = int(keypoints[p2][1] * w), int(keypoints[p2][0] * h)
+            cv2.line(frame, (x1, y1), (x2, y2), (0, 255, 255), 2)
 
 # -------------------------------
 # Helpers
@@ -99,6 +121,8 @@ while True:
         KP["l_hip"], KP["r_hip"]
     ]
 
+    display = frame.copy()
+
     if all(keypoints[i][2] > CONF_THRESH for i in required):
 
         # Points
@@ -111,20 +135,16 @@ while True:
         l_hp = get_point(keypoints, KP["l_hip"], w, h)
         r_hp = get_point(keypoints, KP["r_hip"], w, h)
 
-        # -------------------------------
-        # Angles (for display only)
-        # -------------------------------
+        # Angles (display only)
         l_angle = calculate_angle(l_sh, l_el, l_wr)
         r_angle = calculate_angle(r_sh, r_el, r_wr)
 
-        cv2.putText(frame, f"L Elbow: {int(l_angle)}°", (30, 50),
+        cv2.putText(display, f"L Elbow: {int(l_angle)}°", (30, 50),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
-        cv2.putText(frame, f"R Elbow: {int(r_angle)}°", (30, 90),
+        cv2.putText(display, f"R Elbow: {int(r_angle)}°", (30, 90),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
 
-        # -------------------------------
         # Collect Frames
-        # -------------------------------
         if collecting:
             frame_id += 1
             if frame_id % FRAME_SKIP == 0:
@@ -136,35 +156,26 @@ while True:
                 )
 
         # -------------------------------
-        # Draw skeleton
+        # 🔥 SKELETON (REPLACED FROM COLLECTOR)
         # -------------------------------
-        pairs = [
+        draw_keypoints(display, keypoints)
+
+        draw_connections(display, keypoints, [
             (KP["l_shoulder"], KP["l_elbow"]),
             (KP["l_elbow"], KP["l_wrist"]),
             (KP["r_shoulder"], KP["r_elbow"]),
             (KP["r_elbow"], KP["r_wrist"]),
             (KP["l_shoulder"], KP["r_shoulder"]),
             (KP["l_hip"], KP["r_hip"])
-        ]
-
-        for a, b in pairs:
-            pa = get_point(keypoints, a, w, h)
-            pb = get_point(keypoints, b, w, h)
-            cv2.line(frame, pa, pb, (0,255,0), 2)
+        ])
 
     else:
-        cv2.putText(frame, "Show full upper body",
+        cv2.putText(display, "Show full upper body",
                     (50, 400), cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
-    # -------------------------------
-    # Display Prediction
-    # -------------------------------
-    cv2.imshow("Arm Raise Live Feedback", frame)
+    cv2.imshow("Arm Raise Live Feedback", display)
     key = cv2.waitKey(2) & 0xFF
 
-    # -------------------------------
-    # Controls
-    # -------------------------------
     if key == 27:
         break
 
@@ -180,31 +191,62 @@ while True:
 
         features = buffer.summarize("NA")
 
-        rep_df = pd.DataFrame([features])
+        if features is None:
+            print("No rep detected")
+            continue
 
-        # Safety check
-        for col in FEATURE_ORDER:
-            if col not in rep_df.columns:
-                print(f"❌ Missing feature: {col}")
+        rep_df = pd.DataFrame([features])
 
         if "label" in rep_df.columns:
             rep_df = rep_df.drop(columns=["label"])
 
-        print("Features:", rep_df)  # DEBUG
+        X = rep_df[FEATURE_ORDER].values.reshape(1, -1)
 
-        X = rep_df[FEATURE_ORDER].values
-        pred = model.predict(X)
-        pred_label = le.inverse_transform(pred)[0]
+        pred = model.predict(X)[0]
+        pred_label_raw = le.inverse_transform([pred])[0]
 
-        print("✅ Live feedback:", pred_label)
+        if hasattr(model, "predict_proba"):
+            probs = model.predict_proba(X)[0]
+            confidence = np.max(probs)
+        else:
+            confidence = None
 
-        # Display on screen
-        cv2.putText(frame, f"Form: {pred_label}",
-                    (50,150), cv2.FONT_HERSHEY_SIMPLEX, 1,
-                    (0,255,0), 3)
+        pred_history.append(pred_label_raw)
+        pred_label = max(set(pred_history), key=list(pred_history).count)
+
+        l_range = rep_df["l_shoulder_range"].values[0]
+        r_range = rep_df["r_shoulder_range"].values[0]
+        wrist_range = rep_df["wrist_y_range"].values[0]
+        torso = rep_df["torso_angle_mean"].values[0]
+
+        rule_label = pred_label
+
+        if wrist_range < 30:
+            rule_label = "LOW_RANGE"
+        elif abs(torso) > 25:
+            rule_label = "BAD_POSTURE"
+        elif abs(l_range - r_range) > 20:
+            rule_label = "ASYMMETRY"
+
+        if confidence is not None and confidence < 0.55:
+            feedback = rule_label
+        else:
+            feedback = pred_label
+
+        print("\n===== RESULT =====")
+        print("Model:", pred_label)
+        print("Final Feedback:", feedback)
+        if confidence:
+            print("Confidence:", confidence)
+
+        cv2.putText(display, f"Form: {feedback} ({pred_label})",
+                    (50, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1,
+                    (0, 255, 0),
+                    3)
 
         log_rep(features)
-
         buffer = None
 
 cap.release()

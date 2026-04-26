@@ -17,7 +17,7 @@ output_details = interpreter.get_output_details()
 input_height, input_width = input_details[0]['shape'][1:3]
 
 # -------------------------------
-# Load Shoulder Press Model
+# Load Model
 # -------------------------------
 model = joblib.load("neck_svm_model.pkl")
 le = joblib.load("neck_label_encoder.pkl")
@@ -25,7 +25,7 @@ le = joblib.load("neck_label_encoder.pkl")
 FEATURE_ORDER = [
     "r_wrist_y_range",
     "l_wrist_y_range",
-    "chin_y_range",              # ← THIS WAS MISSING
+    "chin_y_range",
     "hip_y_range",
     "neck_hip_angle_mean",
     "neck_forward_shift",
@@ -53,8 +53,11 @@ KP = {
 def run_movenet(frame):
     h, w, _ = frame.shape
     img = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-    img = tf.image.resize_with_pad(np.expand_dims(img, axis=0),
-                                   input_height, input_width)
+    img = tf.image.resize_with_pad(
+        np.expand_dims(img, axis=0),
+        input_height,
+        input_width
+    )
     img = tf.cast(img, dtype=tf.float32)
 
     interpreter.set_tensor(input_details[0]['index'], img.numpy())
@@ -68,7 +71,7 @@ def get_point(kp, idx, w, h):
 
 
 # -------------------------------
-# Camera Setup
+# Camera
 # -------------------------------
 cap = cv2.VideoCapture(0)
 
@@ -76,7 +79,7 @@ collecting = False
 buffer = None
 frame_id = 0
 FRAME_SKIP = 3
-CONF_THRESH = 0.4
+CONF_THRESH = 0.2
 
 print("Press 's' to START rep, 'e' to END rep, ESC to quit")
 
@@ -109,21 +112,29 @@ while True:
         l_wr = get_point(keypoints, KP["l_wrist"], w, h)
         l_hp = get_point(keypoints, KP["l_hip"], w, h)
 
+        # HEAD (nose used as proxy)
         neck = get_point(keypoints, KP["nose"], w, h)
 
         # -------------------------------
-        # Shoulder Press Angle
+        # Draw HEAD POINT (IMPORTANT FIX)
+        # -------------------------------
+        cv2.circle(frame, neck, 8, (255, 0, 0), -1)
+        cv2.putText(frame, "HEAD", (neck[0], neck[1] - 10),
+                    cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 0, 0), 2)
+
+        # -------------------------------
+        # Shoulder angles (optional display)
         # -------------------------------
         r_angle = calculate_angle(r_sh, r_el, r_wr)
         l_angle = calculate_angle(l_sh, l_el, l_wr)
 
-        cv2.putText(frame, f"R Press: {int(r_angle)}°", (30, 50),
+        cv2.putText(frame, f"R Elbow: {int(r_angle)}", (30, 50),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
-        cv2.putText(frame, f"L Press: {int(l_angle)}°", (30, 90),
+        cv2.putText(frame, f"L Elbow: {int(l_angle)}", (30, 90),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0,255,0), 2)
 
         # -------------------------------
-        # Collect Frames
+        # Collect frames
         # -------------------------------
         if collecting:
             frame_id += 1
@@ -153,7 +164,7 @@ while True:
         cv2.putText(frame, "Move fully into frame", (50, 400),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0,0,255), 2)
 
-    cv2.imshow("Shoulder Press Live Feedback", frame)
+    cv2.imshow("Neck Exercise Feedback", frame)
     key = cv2.waitKey(2) & 0xFF
 
     # -------------------------------
@@ -174,15 +185,41 @@ while True:
 
         features = buffer.summarize("NA")
 
+        if features is None:
+            print("No rep detected properly")
+            continue
+
         rep_df = pd.DataFrame([features])
         if "label" in rep_df.columns:
             rep_df = rep_df.drop(columns=["label"])
 
-        X = rep_df[FEATURE_ORDER].values
+        # -------------------------------
+        # FIX: correct input shape
+        # -------------------------------
+        X = rep_df[FEATURE_ORDER].values.reshape(1, -1)
+
+        # -------------------------------
+        # DEBUG: feature print
+        # -------------------------------
+        print("\n===== FEATURE VECTOR =====")
+        for f, v in zip(FEATURE_ORDER, X.flatten()):
+            print(f"{f}: {v}")
+
+        # -------------------------------
+        # Prediction
+        # -------------------------------
         pred = model.predict(X)
         pred_label = le.inverse_transform(pred)[0]
 
         print("Live feedback:", pred_label)
+
+        # -------------------------------
+        # Show result on screen
+        # -------------------------------
+        cv2.putText(frame, f"Result: {pred_label}",
+                    (30, 150),
+                    cv2.FONT_HERSHEY_SIMPLEX,
+                    1, (0, 255, 255), 3)
 
         log_rep(features)
 

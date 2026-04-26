@@ -1,9 +1,9 @@
 import pandas as pd
 import joblib
 
-from sklearn.svm import SVC
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, LabelEncoder
+from sklearn.ensemble import HistGradientBoostingClassifier
 from sklearn.model_selection import StratifiedKFold, cross_val_score, cross_val_predict
 from sklearn.metrics import classification_report, confusion_matrix
 
@@ -19,7 +19,9 @@ df = df[df["label"] != "NA"]
 df = df[df["frames"] > 10]
 df = df.reset_index(drop=True)
 
-# Fix asymmetry feature
+# -------------------------------
+# 3. Feature engineering
+# -------------------------------
 df["shoulder_asymmetry"] = abs(
     df["r_shoulder_range"] - df["l_shoulder_range"]
 )
@@ -28,43 +30,33 @@ print("\nClass Distribution:")
 print(df["label"].value_counts())
 
 # -------------------------------
-# 3. Features and labels
+# 4. Features and labels
 # -------------------------------
 X = df.drop(columns=["label"])
 y = df["label"]
 
-# Encode labels
 le = LabelEncoder()
 y_encoded = le.fit_transform(y)
 
 # -------------------------------
-# 4. Model Pipeline
+# 5. MODEL (UPDATED ONLY HERE)
 # -------------------------------
 model = Pipeline([
     ("scaler", StandardScaler()),
-    ("clf", SVC(
-        kernel="linear",       # simpler, less overfitting
-        C=0.1,
-        class_weight="balanced"
+    ("clf", HistGradientBoostingClassifier(
+        max_depth=4,
+        learning_rate=0.05,
+        max_iter=200,
+        random_state=42
     ))
 ])
 
 # -------------------------------
-# 5. Stratified K-Fold CV
+# 6. Cross validation
 # -------------------------------
-cv = StratifiedKFold(
-    n_splits=5,
-    shuffle=True,
-    random_state=42
-)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
 
-# Cross-validation accuracy
-scores = cross_val_score(
-    model,
-    X,
-    y_encoded,
-    cv=cv
-)
+scores = cross_val_score(model, X, y_encoded, cv=cv)
 
 print("\n===== CROSS VALIDATION RESULTS =====")
 print("Fold Accuracies:", scores)
@@ -72,35 +64,25 @@ print("Mean Accuracy:", scores.mean())
 print("Std Dev:", scores.std())
 
 # -------------------------------
-# 6. Cross-validated predictions
+# 7. Predictions
 # -------------------------------
-y_pred = cross_val_predict(
-    model,
-    X,
-    y_encoded,
-    cv=cv
-)
+y_pred = cross_val_predict(model, X, y_encoded, cv=cv)
 
 print("\n===== CLASSIFICATION REPORT =====")
-print(classification_report(
-    y_encoded,
-    y_pred,
-    target_names=le.classes_,
-    zero_division=0
-))
+print(classification_report(y_encoded, y_pred, target_names=le.classes_))
 
 print("\n===== CONFUSION MATRIX =====")
 print(confusion_matrix(y_encoded, y_pred))
 
 # -------------------------------
-# 7. Train final model on full data
+# 8. Train final model
 # -------------------------------
 model.fit(X, y_encoded)
 
 # -------------------------------
-# 8. Save model
+# 9. Save model
 # -------------------------------
-joblib.dump(model, "arm_svm_model.pkl")
+joblib.dump(model, "arm_hgb_model.pkl")
 joblib.dump(le, "arm_label_encoder.pkl")
 
-print("\nModel saved successfully!")
+print("\nHistGradientBoosting model saved successfully!")
